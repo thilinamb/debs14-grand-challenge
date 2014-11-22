@@ -27,13 +27,16 @@ public class BaseSpout extends BaseRichSpout {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         // instead of defining a new serializable data type, we'll emit a set of named data values as a tuple.
-        outputFieldsDeclarer.declare(new Fields(Constants.InputTupleFields.ID,
-                Constants.InputTupleFields.TIMESTAMP,
-                Constants.InputTupleFields.VALUE,
-                Constants.InputTupleFields.PROPERTY,
-                Constants.InputTupleFields.PLUG_ID,
-                Constants.InputTupleFields.HOUSEHOLD_ID,
-                Constants.InputTupleFields.HOUSE_ID));
+        outputFieldsDeclarer.declareStream(Constants.Streams.POWER_GRID_DATA, new Fields(Constants.DataFields.ID,
+                Constants.DataFields.TIMESTAMP,
+                Constants.DataFields.VALUE,
+                Constants.DataFields.PROPERTY,
+                Constants.DataFields.PLUG_ID,
+                Constants.DataFields.HOUSEHOLD_ID,
+                Constants.DataFields.HOUSE_ID));
+        // tick tuple stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.CUSTOM_TICK_TUPLE,
+                new Fields(Constants.DataFields.TIMESTAMP));
     }
 
     @Override
@@ -61,9 +64,6 @@ public class BaseSpout extends BaseRichSpout {
         if (input != null) {
             // tokenize the data
             String[] values = tokenize(input);
-            if(!isValid(values)){
-                return;
-            }
             ts = Long.parseLong(values[1]);
             // initialize the tick counter
             if(tickStartTimeStamp == 0){
@@ -73,17 +73,11 @@ public class BaseSpout extends BaseRichSpout {
             if(tickStartTimeStamp + 15l < ts){
                 tickStartTimeStamp = ts;
                 // emit a tick tuple every 15 seconds.
-                collector.emit(new Values(0, // id
-                        ts, // timestamp in seconds.
-                        0.0, // value
-                        Constants.TICK_TUPLE, // reading type
-                        "", // plug id
-                        "", // household id
-                        ""));
+                collector.emit(Constants.Streams.CUSTOM_TICK_TUPLE, new Values(ts));
             }
 
             // emit. Do a type cast when required.
-            collector.emit(new Values(values[0], // id
+            collector.emit(Constants.Streams.POWER_GRID_DATA, new Values(values[0], // id
                     ts, // timestamp in seconds.
                     Double.parseDouble(values[2]), // value
                     Integer.parseInt(values[3]), // reading type
@@ -95,17 +89,5 @@ public class BaseSpout extends BaseRichSpout {
 
     private String[] tokenize(String tuple) {
         return tuple.split(",");
-    }
-
-    private boolean isValid(String[] values){
-        if(values[4] == null || values[5] == null || values[6] == null){
-            return false;
-        }
-        if(values[4].replace(" ", "").length() == 0 ||
-                values[5].replace(" ", "").length() == 0 ||
-                values[6].replace(" ", "").length() == 0){
-            return false;
-        }
-        return true;
     }
 }
