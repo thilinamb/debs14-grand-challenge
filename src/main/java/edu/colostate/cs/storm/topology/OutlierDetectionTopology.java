@@ -3,31 +3,25 @@ package edu.colostate.cs.storm.topology;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
-import backtype.storm.tuple.Fields;
 import edu.colostate.cs.storm.Constants;
-import edu.colostate.cs.storm.bolt.HouseLoadPredictorBolt;
-import edu.colostate.cs.storm.bolt.PlugLoadPredictorBolt;
 import edu.colostate.cs.storm.bolt.ReportBolt;
+import edu.colostate.cs.storm.bolt.SlidingWindowBolt;
 import edu.colostate.cs.storm.spout.BaseSpout;
 
 /**
  * Author: Thilina
- * Date: 10/16/14
+ * Date: 11/22/14
  */
-public class BasicTopology {
+public class OutlierDetectionTopology {
     public static void main(String[] args) {
         TopologyBuilder builder = new TopologyBuilder();
 
         builder.setSpout("spout", new BaseSpout(), 1);
-        builder.setBolt("predict-house", new HouseLoadPredictorBolt(), 2).fieldsGrouping("spout",
-                Constants.Streams.POWER_GRID_DATA,
-                new Fields(Constants.DataFields.HOUSE_ID)).globalGrouping("spout",
-                Constants.Streams.CUSTOM_TICK_TUPLE);
-        builder.setBolt("predict-plug", new PlugLoadPredictorBolt(), 2).fieldsGrouping("spout",
-                Constants.Streams.POWER_GRID_DATA,
-                new Fields(Constants.DataFields.HOUSE_ID)).globalGrouping("spout",
-                Constants.Streams.CUSTOM_TICK_TUPLE);
-        builder.setBolt("report", new ReportBolt(), 1).globalGrouping("predict-house").globalGrouping("predict-plug");
+
+        builder.setBolt("sliding-window-bolt", new SlidingWindowBolt(), 1).globalGrouping("spout",
+                Constants.Streams.POWER_GRID_DATA);
+        builder.setBolt("report", new ReportBolt(), 1).globalGrouping("sliding-window-bolt",
+                Constants.Streams.SLIDING_WINDOW_STREAM);
 
         Config conf = new Config();
         //conf.setDebug(true);
@@ -45,8 +39,8 @@ public class BasicTopology {
         } else { */
         conf.setMaxTaskParallelism(5);
         LocalCluster cluster = new LocalCluster();
-        conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
-        cluster.submitTopology(args[0], conf, builder.createTopology());
+        //conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
+        cluster.submitTopology("check-sliding-window", conf, builder.createTopology());
         try {
             Thread.sleep(60 * 1000);
         } catch (InterruptedException e) {
@@ -56,4 +50,3 @@ public class BasicTopology {
         //}
     }
 }
-
