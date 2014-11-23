@@ -4,6 +4,7 @@ import backtype.storm.topology.BasicOutputCollector;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseBasicBolt;
 import backtype.storm.tuple.Tuple;
+import edu.colostate.cs.storm.Constants;
 
 /**
  * Author: Thilina
@@ -13,7 +14,9 @@ public class ReportBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, BasicOutputCollector collector) {
-        System.out.println(tuple);
+        if(tuple.getDoubleByField(Constants.DataFields.CURRENT_GLOBAL_MEDIAN_LOAD) > 0.0){
+            System.out.println(tuple);
+        }
     }
 
     @Override

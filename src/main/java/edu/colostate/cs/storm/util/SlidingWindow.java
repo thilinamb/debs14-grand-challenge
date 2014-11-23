@@ -27,18 +27,21 @@ public class SlidingWindow {
         }
         // add the entry
         window.addLast(entry);
-        // update the timestamp end timestamp
-        tsEnd = entry.getTime();
-        // now we need to remove the entries which are expired
-        long newTsStart = tsEnd - length + 1;
-        ArrayList<SlidingWindowEntry> removed = new ArrayList<SlidingWindowEntry>();
-        while (tsStart < newTsStart) {
-            if (window.element().getTime() < newTsStart) {
-                removed.add(window.removeFirst());
-                tsStart = window.element().getTime();
+        // sliding window should be moved.
+        if (entry.getTime() > tsEnd) {
+            // update the timestamp end timestamp
+            tsEnd = entry.getTime();
+            // now we need to remove the entries which are expired
+            long newTsStart = tsEnd - length + 1;
+            ArrayList<SlidingWindowEntry> removed = new ArrayList<SlidingWindowEntry>();
+            while (tsStart < newTsStart) {
+                if (window.element().getTime() < newTsStart) {
+                    removed.add(window.removeFirst());
+                    tsStart = window.element().getTime();
+                }
             }
+            callback.remove(removed);
         }
-        callback.remove(removed);
         /*System.out.println("start:" + window.element().getTime() + "    end:" + window.getLast().getTime());
         System.out.print("{");
         for (SlidingWindowEntry e : window) {

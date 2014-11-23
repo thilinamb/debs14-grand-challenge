@@ -30,5 +30,6 @@ public class Constants {
         public static final String POWER_GRID_DATA = "power-grid-data";
         public static final String CUSTOM_TICK_TUPLE = "custom-tick-stream";
         public static final String SLIDING_WINDOW_STREAM = "sliding-window-stream";
+        public static final String GLOBAL_MEDIAN_STREAM = "global-median-stream";
     }
 }

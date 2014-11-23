@@ -4,6 +4,7 @@ import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
 import edu.colostate.cs.storm.Constants;
+import edu.colostate.cs.storm.bolt.GlobalMedianCalculatorBolt;
 import edu.colostate.cs.storm.bolt.ReportBolt;
 import edu.colostate.cs.storm.bolt.SlidingWindowBolt;
 import edu.colostate.cs.storm.spout.BaseSpout;
@@ -20,8 +21,10 @@ public class OutlierDetectionTopology {
 
         builder.setBolt("sliding-window-bolt", new SlidingWindowBolt(), 1).globalGrouping("spout",
                 Constants.Streams.POWER_GRID_DATA);
-        builder.setBolt("report", new ReportBolt(), 1).globalGrouping("sliding-window-bolt",
+        builder.setBolt("global-median-calc-bolt", new GlobalMedianCalculatorBolt(), 1).globalGrouping("sliding-window-bolt",
                 Constants.Streams.SLIDING_WINDOW_STREAM);
+        builder.setBolt("report-bolt", new ReportBolt(), 1).globalGrouping("global-median-calc-bolt",
+                Constants.Streams.GLOBAL_MEDIAN_STREAM);
 
         Config conf = new Config();
         //conf.setDebug(true);

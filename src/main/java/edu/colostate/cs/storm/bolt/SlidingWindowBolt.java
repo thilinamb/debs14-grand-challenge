@@ -54,9 +54,6 @@ public class SlidingWindowBolt extends BaseBasicBolt {
         SlidingWindowEntryImpl windowEntry = new SlidingWindowEntryImpl(
                 tuple.getLongByField(Constants.DataFields.TIMESTAMP),
                 tuple.getDoubleByField(Constants.DataFields.VALUE));
-
-        outputCollector.emit(Constants.Streams.SLIDING_WINDOW_STREAM,
-                new Values(windowEntry.ts, windowEntry.value, Constants.SLIDING_WINDOW_ADD));
         window.add(windowEntry, new SlidingWindowCallback() {
             @Override
             public void remove(List<SlidingWindowEntry> entries) {
@@ -67,6 +64,8 @@ public class SlidingWindowBolt extends BaseBasicBolt {
                 }
             }
         });
+        outputCollector.emit(Constants.Streams.SLIDING_WINDOW_STREAM,
+                new Values(windowEntry.ts, windowEntry.value, Constants.SLIDING_WINDOW_ADD));
     }
 
     @Override
