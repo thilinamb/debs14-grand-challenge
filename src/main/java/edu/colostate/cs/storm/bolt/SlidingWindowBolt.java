@@ -22,12 +22,18 @@ import java.util.Map;
 public class SlidingWindowBolt extends BaseBasicBolt {
 
     private class SlidingWindowEntryImpl implements SlidingWindowEntry {
+        private String houseId;
+        private String houseHoldId;
+        private String plugId;
         private long ts;
         private double value;
 
-        private SlidingWindowEntryImpl(long ts, double value) {
+        private SlidingWindowEntryImpl(long ts, double value, String houseId, String houseHoldId, String plugId) {
             this.ts = ts;
             this.value = value;
+            this.houseId = houseId;
+            this.houseHoldId = houseHoldId;
+            this.plugId = plugId;
         }
 
         @Override
@@ -53,25 +59,33 @@ public class SlidingWindowBolt extends BaseBasicBolt {
         }
         SlidingWindowEntryImpl windowEntry = new SlidingWindowEntryImpl(
                 tuple.getLongByField(Constants.DataFields.TIMESTAMP),
-                tuple.getDoubleByField(Constants.DataFields.VALUE));
+                tuple.getDoubleByField(Constants.DataFields.VALUE),
+                tuple.getStringByField(Constants.DataFields.HOUSE_ID),
+                tuple.getStringByField(Constants.DataFields.HOUSEHOLD_ID),
+                tuple.getStringByField(Constants.DataFields.PLUG_ID));
         window.add(windowEntry, new SlidingWindowCallback() {
             @Override
             public void remove(List<SlidingWindowEntry> entries) {
                 for (SlidingWindowEntry e : entries) {
                     SlidingWindowEntryImpl entry = (SlidingWindowEntryImpl) e;
                     outputCollector.emit(Constants.Streams.SLIDING_WINDOW_STREAM,
-                            new Values(entry.ts, entry.value, Constants.SLIDING_WINDOW_REMOVE));
+                            new Values(entry.ts, entry.houseId, entry.houseHoldId,
+                                    entry.plugId, entry.value, Constants.SLIDING_WINDOW_REMOVE));
                 }
             }
         });
         outputCollector.emit(Constants.Streams.SLIDING_WINDOW_STREAM,
-                new Values(windowEntry.ts, windowEntry.value, Constants.SLIDING_WINDOW_ADD));
+                new Values(windowEntry.ts, windowEntry.houseId, windowEntry.houseHoldId,
+                        windowEntry.plugId, windowEntry.value, Constants.SLIDING_WINDOW_ADD));
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
         outputFieldsDeclarer.declareStream(Constants.Streams.SLIDING_WINDOW_STREAM,
                 new Fields(Constants.DataFields.TIMESTAMP,
+                        Constants.DataFields.HOUSE_ID,
+                        Constants.DataFields.HOUSEHOLD_ID,
+                        Constants.DataFields.PLUG_ID,
                         Constants.DataFields.VALUE,
                         Constants.DataFields.SLIDING_WINDOW_ACTION));
     }

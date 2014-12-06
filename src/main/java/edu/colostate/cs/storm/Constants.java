@@ -16,6 +16,11 @@ public class Constants {
         public static final String PREDICTED_LOAD = "predicted_load";
         public static final String CURRENT_GLOBAL_MEDIAN_LOAD = "global-median-load";
         public static final String SLIDING_WINDOW_ACTION = "sliding-window-action";
+        public static final String PLUG_SPECIFIC_KEY = "plug-specific-key";
+        public static final String SLIDING_WINDOW_START = "sliding-window-start";
+        public static final String SLIDING_WINDOW_END = "sliding-window-end";
+        public static final String OUTLIER_PERCENTAGE = "outlier-percentage";
+        public static final String PER_PLUG_MEDIAN = "per-plug-median";
     }
 
     public static final int MEASUREMENT_WORK = 0;
@@ -31,5 +36,7 @@ public class Constants {
         public static final String CUSTOM_TICK_TUPLE = "custom-tick-stream";
         public static final String SLIDING_WINDOW_STREAM = "sliding-window-stream";
         public static final String GLOBAL_MEDIAN_STREAM = "global-median-stream";
+        public static final String PER_PLUG_MEDIAN_STREAM = "per-plug-median-stream";
+        public static final String OUTLIER_STREAM = "outlier-stream";
     }
 }

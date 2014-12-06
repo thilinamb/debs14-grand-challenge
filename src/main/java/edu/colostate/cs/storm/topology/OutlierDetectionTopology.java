@@ -3,10 +3,9 @@ package edu.colostate.cs.storm.topology;
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
 import backtype.storm.topology.TopologyBuilder;
+import backtype.storm.tuple.Fields;
 import edu.colostate.cs.storm.Constants;
-import edu.colostate.cs.storm.bolt.GlobalMedianCalculatorBolt;
-import edu.colostate.cs.storm.bolt.ReportBolt;
-import edu.colostate.cs.storm.bolt.SlidingWindowBolt;
+import edu.colostate.cs.storm.bolt.*;
 import edu.colostate.cs.storm.spout.BaseSpout;
 
 /**
@@ -23,8 +22,16 @@ public class OutlierDetectionTopology {
                 Constants.Streams.POWER_GRID_DATA);
         builder.setBolt("global-median-calc-bolt", new GlobalMedianCalculatorBolt(), 1).globalGrouping("sliding-window-bolt",
                 Constants.Streams.SLIDING_WINDOW_STREAM);
-        builder.setBolt("report-bolt", new ReportBolt(), 1).globalGrouping("global-median-calc-bolt",
-                Constants.Streams.GLOBAL_MEDIAN_STREAM);
+        builder.setBolt("per-plug-median-calc-bolt", new PlugMedianCalculatorBolt(), 3).fieldsGrouping("sliding-window-bolt",
+                Constants.Streams.SLIDING_WINDOW_STREAM, new Fields(Constants.DataFields.HOUSE_ID,
+                Constants.DataFields.HOUSEHOLD_ID, Constants.DataFields.PLUG_ID));
+
+        builder.setBolt("outlier-detection-bolt", new OutlierDetectionBolt(), 1).
+                allGrouping("global-median-calc-bolt", Constants.Streams.GLOBAL_MEDIAN_STREAM).
+                fieldsGrouping("per-plug-median-calc-bolt", Constants.Streams.PER_PLUG_MEDIAN_STREAM,
+                        new Fields(Constants.DataFields.PLUG_SPECIFIC_KEY));
+        builder.setBolt("report-bolt", new ReportBolt(), 1).globalGrouping("outlier-detection-bolt",
+                Constants.Streams.OUTLIER_STREAM);
 
         Config conf = new Config();
         //conf.setDebug(true);

@@ -59,22 +59,15 @@ public abstract class LoadPredictorBolt extends BaseBasicBolt {
         AverageTracker averageTracker = getTracker(getKey(tuple));
         Long timeStamp = tuple.getLongByField(Constants.DataFields.TIMESTAMP);
         Double value = null;
-        try {
-            value = tuple.getDoubleByField(Constants.DataFields.VALUE);
-        } catch (RuntimeException e) {
-            e.printStackTrace();
-            System.out.println("Error Tuple: " + tuple);
-        }
-        // Initialize the current slice
+        value = tuple.getDoubleByField(Constants.DataFields.VALUE);
+
+        // Initialize the very first slice
         if (currentSliceStart == 0l) {
             currentSliceStart = timeStamp;
         }
         // Check the slice
         // This update is within current slice.
         if ((currentSliceStart + sliceLength) >= timeStamp) {
-            if(timeStamp < currentSliceStart){
-                System.out.println("**************************************************************s");
-            }
             averageTracker.track(value);
         } else {    // start a new slice
             startSlice();
@@ -122,11 +115,11 @@ public abstract class LoadPredictorBolt extends BaseBasicBolt {
         }
     }
 
-    protected void emitOutputStream(BasicOutputCollector outputCollector){
-        for(String key: trackers.keySet()){
+    protected void emitOutputStream(BasicOutputCollector outputCollector) {
+        for (String key : trackers.keySet()) {
             double currentAvg = trackers.get(key).retrieve();
             double median = 0;
-            if(archiveMap.containsKey(key)){
+            if (archiveMap.containsKey(key)) {
                 median = archiveMap.get(key).getMedian();
             }
             double prediction = predict(currentAvg, median);
