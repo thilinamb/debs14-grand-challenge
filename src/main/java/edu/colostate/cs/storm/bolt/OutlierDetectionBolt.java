@@ -21,7 +21,7 @@ import java.util.PriorityQueue;
  */
 public class OutlierDetectionBolt extends BaseBasicBolt {
 
-    private class ComparableTuple implements Serializable, Comparable<ComparableTuple>{
+    private class ComparableTuple implements Serializable, Comparable<ComparableTuple> {
 
         private Tuple tuple;
 
@@ -39,18 +39,18 @@ public class OutlierDetectionBolt extends BaseBasicBolt {
     private FixedMap<Long, Double> globalMedianBacklog = new FixedMap<Long, Double>(300, 300);
     private Map<String, OutlierTracker> outliers = new HashMap<String, OutlierTracker>();
     private PriorityQueue<ComparableTuple> unprocessedMessages = new PriorityQueue<ComparableTuple>();
+
     @Override
     public void execute(Tuple tuple, final BasicOutputCollector outputCollector) {
-        if (tuple.getSourceStreamId() == Constants.Streams.GLOBAL_MEDIAN_STREAM) {
+        if (tuple.getSourceStreamId().equals(Constants.Streams.GLOBAL_MEDIAN_STREAM)) {
             globalMedianBacklog.put(tuple.getLongByField(Constants.DataFields.TIMESTAMP),
                     tuple.getDoubleByField(Constants.DataFields.CURRENT_GLOBAL_MEDIAN_LOAD));
-            if(!unprocessedMessages.isEmpty()){ // check to see if there are unprocessed messages, they are
             // ordered based on the timestamps
-                while(unprocessedMessages.peek().tuple.getLongByField(Constants.DataFields.TIMESTAMP) ==
-                        tuple.getLongByField(Constants.DataFields.TIMESTAMP)){
-                    Tuple perPlugMedianTuple = unprocessedMessages.poll().tuple;
-                    processPerPlugMedianTuple(perPlugMedianTuple, outputCollector);
-                }
+            while (!unprocessedMessages.isEmpty() &&
+                    unprocessedMessages.peek().tuple.getLongByField(Constants.DataFields.TIMESTAMP).
+                            equals(tuple.getLongByField(Constants.DataFields.TIMESTAMP))) {
+                Tuple perPlugMedianTuple = unprocessedMessages.poll().tuple;
+                processPerPlugMedianTuple(perPlugMedianTuple, outputCollector);
             }
         } else {
             processPerPlugMedianTuple(tuple, outputCollector);
@@ -77,14 +77,14 @@ public class OutlierDetectionBolt extends BaseBasicBolt {
             if (globalMedian < val) { // outlier
                 if (!tracker.isOutlier(key)) {
                     tracker.addOutlier(key);
-                    outputCollector.emit(Constants.Streams.OUTLIER_STREAM, new Values(ts - 24 * 60 *60, ts,
+                    outputCollector.emit(Constants.Streams.OUTLIER_STREAM, new Values(ts - 24 * 60 * 60, ts,
                             houseId, tracker.getCurrentPercentage()));
                 }
             } else {
                 if (tracker.isOutlier(key)) {
                     tracker.removeOutlier(key);
                     //emit
-                    outputCollector.emit(Constants.Streams.OUTLIER_STREAM, new Values(ts - 24 * 60 *60, ts,
+                    outputCollector.emit(Constants.Streams.OUTLIER_STREAM, new Values(ts - 24 * 60 * 60, ts,
                             houseId, tracker.getCurrentPercentage()));
                 }
             }
