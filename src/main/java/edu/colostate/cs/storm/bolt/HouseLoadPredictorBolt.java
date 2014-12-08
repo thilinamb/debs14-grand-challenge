@@ -14,9 +14,12 @@ public class HouseLoadPredictorBolt extends LoadPredictorBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields(Constants.DataFields.TIMESTAMP,
+        outputFieldsDeclarer.declareStream(Constants.Streams.HOUSE_LOAD_PREDICTION, new Fields(Constants.DataFields.TIMESTAMP,
                 Constants.DataFields.HOUSE_ID,
                 Constants.DataFields.PREDICTED_LOAD));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
     }
 
     @Override
@@ -27,5 +30,10 @@ public class HouseLoadPredictorBolt extends LoadPredictorBolt {
     @Override
     protected Values getOutputTuple(long predictedTimeStamp, String keyString, double predictedValue) {
         return new Values(predictedTimeStamp, keyString, predictedValue);
+    }
+
+    @Override
+    protected String getStreamId() {
+        return Constants.Streams.HOUSE_LOAD_PREDICTION;
     }
 }

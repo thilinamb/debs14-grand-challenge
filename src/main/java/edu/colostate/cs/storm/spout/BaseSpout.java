@@ -23,6 +23,7 @@ public class BaseSpout extends BaseRichSpout {
     private SpoutOutputCollector collector;
     private BufferedReader bufferedReader;
     private long tickStartTimeStamp;
+    private int tupleCounter;
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
@@ -37,6 +38,9 @@ public class BaseSpout extends BaseRichSpout {
         // tick tuple stream
         outputFieldsDeclarer.declareStream(Constants.Streams.CUSTOM_TICK_TUPLE,
                 new Fields(Constants.DataFields.TIMESTAMP));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
     }
 
     @Override
@@ -46,7 +50,7 @@ public class BaseSpout extends BaseRichSpout {
         // This spout will be merged with the Kinesis spout eventually.
         try {
             bufferedReader = new BufferedReader(new FileReader
-                    (new File("/Users/thilina/csu/classes/581/project/data/sorted100M.csv")));
+                    (new File("/Users/thilina/csu/classes/581/project/data/10houses.csv")));
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -54,12 +58,7 @@ public class BaseSpout extends BaseRichSpout {
 
     @Override
     public void nextTuple() {
-        String input = null;
-        try {
-            input = bufferedReader.readLine();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        String input = getNextLine();
         long ts = 0;
         if (input != null) {
             // tokenize the data
@@ -84,7 +83,25 @@ public class BaseSpout extends BaseRichSpout {
                     values[4], // plug id
                     values[5], // household id
                     values[6])); // house id
+
+            tupleCounter++;
+            // emit the performance punctuation every 1 million tuple
+            if (tupleCounter % 1000000 == 0) {
+                System.out.println("Base Spout " + tupleCounter);
+                collector.emit(Constants.Streams.PERF_PUNCTUATION_STREAM, new Values(System.nanoTime(),
+                        tupleCounter));
+            }
         }
+    }
+
+    public String getNextLine() {
+        String input = null;
+        try {
+            input = bufferedReader.readLine();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return input;
     }
 
     private String[] tokenize(String tuple) {

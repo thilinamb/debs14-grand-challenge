@@ -42,6 +42,12 @@ public class OutlierDetectionBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, final BasicOutputCollector outputCollector) {
+        if (tuple.getSourceStreamId().equals(Constants.Streams.PERF_PUNCTUATION_STREAM)) {
+            System.out.println("Outlier-detection-bolt");
+            outputCollector.emit(Constants.Streams.PERF_PUNCTUATION_STREAM, tuple.getValues());
+            return;
+        }
+
         if (tuple.getSourceStreamId().equals(Constants.Streams.GLOBAL_MEDIAN_STREAM)) {
             globalMedianBacklog.put(tuple.getLongByField(Constants.DataFields.TIMESTAMP),
                     tuple.getDoubleByField(Constants.DataFields.CURRENT_GLOBAL_MEDIAN_LOAD));
@@ -100,5 +106,9 @@ public class OutlierDetectionBolt extends BaseBasicBolt {
                         Constants.DataFields.SLIDING_WINDOW_END,
                         Constants.DataFields.HOUSE_ID,
                         Constants.DataFields.OUTLIER_PERCENTAGE));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
+
     }
 }

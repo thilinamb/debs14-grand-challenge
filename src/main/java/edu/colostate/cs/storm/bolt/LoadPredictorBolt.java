@@ -40,6 +40,11 @@ public abstract class LoadPredictorBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, BasicOutputCollector basicOutputCollector) {
+        if (tuple.getSourceStreamId().equals(Constants.Streams.PERF_PUNCTUATION_STREAM)) {
+            basicOutputCollector.emit(Constants.Streams.PERF_PUNCTUATION_STREAM, tuple.getValues());
+            return;
+        }
+
         if (tuple.getSourceStreamId().equals(Constants.Streams.CUSTOM_TICK_TUPLE)) {
             tickCounter = (tickCounter + 1) % 2;
             // time to emit
@@ -124,7 +129,9 @@ public abstract class LoadPredictorBolt extends BaseBasicBolt {
             }
             double prediction = predict(currentAvg, median);
             long predictedTimeStamp = currentSliceStart + 2 * sliceLength;
-            outputCollector.emit(getOutputTuple(predictedTimeStamp, key, prediction));
+            outputCollector.emit(getStreamId(), getOutputTuple(predictedTimeStamp, key, prediction));
         }
     }
+
+    protected abstract String getStreamId();
 }

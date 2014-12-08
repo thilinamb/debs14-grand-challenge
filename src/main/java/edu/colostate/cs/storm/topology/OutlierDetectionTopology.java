@@ -19,19 +19,21 @@ public class OutlierDetectionTopology {
         builder.setSpout("spout", new BaseSpout(), 1);
 
         builder.setBolt("sliding-window-bolt", new SlidingWindowBolt(), 1).globalGrouping("spout",
-                Constants.Streams.POWER_GRID_DATA);
+                Constants.Streams.POWER_GRID_DATA).globalGrouping("spout", Constants.Streams.PERF_PUNCTUATION_STREAM);
         builder.setBolt("global-median-calc-bolt", new GlobalMedianCalculatorBolt(), 1).globalGrouping("sliding-window-bolt",
                 Constants.Streams.SLIDING_WINDOW_STREAM);
         builder.setBolt("per-plug-median-calc-bolt", new PlugMedianCalculatorBolt(), 3).fieldsGrouping("sliding-window-bolt",
                 Constants.Streams.SLIDING_WINDOW_STREAM, new Fields(Constants.DataFields.HOUSE_ID,
-                Constants.DataFields.HOUSEHOLD_ID, Constants.DataFields.PLUG_ID));
+                Constants.DataFields.HOUSEHOLD_ID, Constants.DataFields.PLUG_ID)).
+                globalGrouping("sliding-window-bolt", Constants.Streams.PERF_PUNCTUATION_STREAM);
 
         builder.setBolt("outlier-detection-bolt", new OutlierDetectionBolt(), 1).
                 allGrouping("global-median-calc-bolt", Constants.Streams.GLOBAL_MEDIAN_STREAM).
                 fieldsGrouping("per-plug-median-calc-bolt", Constants.Streams.PER_PLUG_MEDIAN_STREAM,
-                        new Fields(Constants.DataFields.PLUG_SPECIFIC_KEY));
+                        new Fields(Constants.DataFields.PLUG_SPECIFIC_KEY)).
+                globalGrouping("per-plug-median-calc-bolt", Constants.Streams.PERF_PUNCTUATION_STREAM);
         builder.setBolt("report-bolt", new ReportBolt(), 1).globalGrouping("outlier-detection-bolt",
-                Constants.Streams.OUTLIER_STREAM);
+                Constants.Streams.OUTLIER_STREAM).globalGrouping("outlier-detection-bolt", Constants.Streams.PERF_PUNCTUATION_STREAM);
 
         Config conf = new Config();
         //conf.setDebug(true);
@@ -52,7 +54,7 @@ public class OutlierDetectionTopology {
         //conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
         cluster.submitTopology("check-sliding-window", conf, builder.createTopology());
         try {
-            Thread.sleep(60 * 1000);
+            Thread.sleep(600 * 1000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

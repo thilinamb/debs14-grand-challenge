@@ -21,13 +21,16 @@ public class LoadPredictionTopology {
         builder.setSpout("spout", new BaseSpout(), 1);
         builder.setBolt("predict-house", new HouseLoadPredictorBolt(), 2).fieldsGrouping("spout",
                 Constants.Streams.POWER_GRID_DATA,
-                new Fields(Constants.DataFields.HOUSE_ID)).globalGrouping("spout",
-                Constants.Streams.CUSTOM_TICK_TUPLE);
+                new Fields(Constants.DataFields.HOUSE_ID)).allGrouping("spout",
+                Constants.Streams.CUSTOM_TICK_TUPLE).globalGrouping("spout", Constants.Streams.PERF_PUNCTUATION_STREAM);
         builder.setBolt("predict-plug", new PlugLoadPredictorBolt(), 2).fieldsGrouping("spout",
                 Constants.Streams.POWER_GRID_DATA,
-                new Fields(Constants.DataFields.HOUSE_ID)).globalGrouping("spout",
-                Constants.Streams.CUSTOM_TICK_TUPLE);
-        builder.setBolt("report", new ReportBolt(), 1).globalGrouping("predict-house").globalGrouping("predict-plug");
+                new Fields(Constants.DataFields.HOUSE_ID)).allGrouping("spout",
+                Constants.Streams.CUSTOM_TICK_TUPLE).globalGrouping("spout", Constants.Streams.PERF_PUNCTUATION_STREAM);
+        builder.setBolt("report", new ReportBolt(), 1).
+                allGrouping("predict-house", Constants.Streams.HOUSE_LOAD_PREDICTION).
+                globalGrouping("predict-house", Constants.Streams.PERF_PUNCTUATION_STREAM).
+                allGrouping("predict-plug", Constants.Streams.PLUG_LOAD_PREDICTION);
 
         Config conf = new Config();
         //conf.setDebug(true);

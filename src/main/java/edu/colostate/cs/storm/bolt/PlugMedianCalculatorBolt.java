@@ -23,6 +23,12 @@ public class PlugMedianCalculatorBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, BasicOutputCollector outputCollector) {
+        if (tuple.getSourceStreamId().equals(Constants.Streams.PERF_PUNCTUATION_STREAM)) {
+            System.out.println("plug-median-calculator");
+            outputCollector.emit(Constants.Streams.PERF_PUNCTUATION_STREAM, tuple.getValues());
+            return;
+        }
+
         int operation = tuple.getIntegerByField(Constants.DataFields.SLIDING_WINDOW_ACTION);
         double value = tuple.getDoubleByField(Constants.DataFields.VALUE);
         long ts = tuple.getLongByField(Constants.DataFields.TIMESTAMP);
@@ -55,6 +61,9 @@ public class PlugMedianCalculatorBolt extends BaseBasicBolt {
         outputFieldsDeclarer.declareStream(Constants.Streams.PER_PLUG_MEDIAN_STREAM,
                 new Fields(Constants.DataFields.PLUG_SPECIFIC_KEY, Constants.DataFields.TIMESTAMP,
                         Constants.DataFields.PER_PLUG_MEDIAN));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
     }
 
     private String getKey(Tuple tuple){

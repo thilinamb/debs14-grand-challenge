@@ -52,6 +52,12 @@ public class SlidingWindowBolt extends BaseBasicBolt {
 
     @Override
     public void execute(Tuple tuple, final BasicOutputCollector outputCollector) {
+        if (tuple.getSourceStreamId().equals(Constants.Streams.PERF_PUNCTUATION_STREAM)) {
+            System.out.println("Sliding-Window-Bolt");
+            outputCollector.emit(Constants.Streams.PERF_PUNCTUATION_STREAM, tuple.getValues());
+            return;
+        }
+
         int type = tuple.getIntegerByField(Constants.DataFields.PROPERTY);
         // we are interested only in load
         if (type == Constants.MEASUREMENT_WORK) {
@@ -88,6 +94,10 @@ public class SlidingWindowBolt extends BaseBasicBolt {
                         Constants.DataFields.PLUG_ID,
                         Constants.DataFields.VALUE,
                         Constants.DataFields.SLIDING_WINDOW_ACTION));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
+
     }
 
 }

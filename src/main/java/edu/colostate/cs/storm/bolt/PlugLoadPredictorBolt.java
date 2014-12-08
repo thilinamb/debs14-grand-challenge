@@ -14,11 +14,14 @@ public class PlugLoadPredictorBolt extends LoadPredictorBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer outputFieldsDeclarer) {
-        outputFieldsDeclarer.declare(new Fields(Constants.DataFields.TIMESTAMP,
+        outputFieldsDeclarer.declareStream(Constants.Streams.PLUG_LOAD_PREDICTION, new Fields(Constants.DataFields.TIMESTAMP,
                 Constants.DataFields.HOUSE_ID,
                 Constants.DataFields.HOUSEHOLD_ID,
                 Constants.DataFields.PLUG_ID,
                 Constants.DataFields.PREDICTED_LOAD));
+        // perf. punctuation stream
+        outputFieldsDeclarer.declareStream(Constants.Streams.PERF_PUNCTUATION_STREAM,
+                new Fields(Constants.DataFields.TIMESTAMP, Constants.DataFields.TUPLE_COUNT));
     }
 
     @Override
@@ -32,5 +35,10 @@ public class PlugLoadPredictorBolt extends LoadPredictorBolt {
     protected Values getOutputTuple(long predictedTimeStamp, String keyString, double predictedValue) {
         String[] segments = keyString.split(":");
         return new Values(predictedTimeStamp, segments[0], segments[1], segments[2], predictedValue);
+    }
+
+    @Override
+    protected String getStreamId() {
+        return Constants.Streams.PLUG_LOAD_PREDICTION;
     }
 }

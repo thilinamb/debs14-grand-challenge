@@ -21,11 +21,11 @@ public class Constants {
         public static final String SLIDING_WINDOW_END = "sliding-window-end";
         public static final String OUTLIER_PERCENTAGE = "outlier-percentage";
         public static final String PER_PLUG_MEDIAN = "per-plug-median";
+        public static final String TUPLE_COUNT = "tuple-count";
     }
 
     public static final int MEASUREMENT_WORK = 0;
     public static final int MEASUREMENT_LOAD = 1;
-    public static final int TICK_TUPLE = 100;
 
     public static final String SLICE_LENGTH = "slice-length";
     public static final int SLIDING_WINDOW_ADD = 1;
@@ -38,5 +38,8 @@ public class Constants {
         public static final String GLOBAL_MEDIAN_STREAM = "global-median-stream";
         public static final String PER_PLUG_MEDIAN_STREAM = "per-plug-median-stream";
         public static final String OUTLIER_STREAM = "outlier-stream";
+        public static final String PERF_PUNCTUATION_STREAM = "perf-punctuation-stream";
+        public static final String HOUSE_LOAD_PREDICTION = "house-load-prediction";
+        public static final String PLUG_LOAD_PREDICTION = "plug-load-prediction";
     }
 }
