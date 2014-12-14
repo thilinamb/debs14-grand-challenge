@@ -46,13 +46,13 @@ public class BaseSpout extends BaseRichSpout {
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         collector = spoutOutputCollector;
-        // TODO: To be replaced by reading from Kinesis code.
-        // This spout will be merged with the Kinesis spout eventually.
-        try {
-            bufferedReader = new BufferedReader(new FileReader
-                    (new File("/Users/thilina/csu/classes/581/project/data/10houses.csv")));
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        if (map.containsKey(Constants.MODE)) {
+            try {
+                bufferedReader = new BufferedReader(new FileReader
+                        (new File("/Users/thilina/csu/classes/581/project/data/10houses.csv")));
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -65,11 +65,11 @@ public class BaseSpout extends BaseRichSpout {
             String[] values = tokenize(input);
             ts = Long.parseLong(values[1]);
             // initialize the tick counter
-            if(tickStartTimeStamp == 0){
+            if (tickStartTimeStamp == 0) {
                 tickStartTimeStamp = ts;
             }
             // reset tick counter
-            if(tickStartTimeStamp + 15l < ts){
+            if (tickStartTimeStamp + 15l < ts) {
                 tickStartTimeStamp = ts;
                 // emit a tick tuple every 15 seconds.
                 collector.emit(Constants.Streams.CUSTOM_TICK_TUPLE, new Values(ts));

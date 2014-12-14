@@ -30,6 +30,11 @@ public class Constants {
     public static final String SLICE_LENGTH = "slice-length";
     public static final int SLIDING_WINDOW_ADD = 1;
     public static final int SLIDING_WINDOW_REMOVE = -1;
+    public static final String S3_BUCKET_NAME = "s3-bucket";
+    public static final String S3_KEY = "s3-key";
+    public static final String S3_OUTPUT_KEY = "s3-output";
+    public static final String MODE = "mode";
+    public static final String MODE_REMOTE = "remote";
 
     public class Streams {
         public static final String POWER_GRID_DATA = "power-grid-data";

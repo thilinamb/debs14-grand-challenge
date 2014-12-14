@@ -10,6 +10,7 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
 import com.amazonaws.services.s3.model.GetObjectRequest;
 import com.amazonaws.services.s3.model.S3Object;
+import edu.colostate.cs.storm.Constants;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -27,14 +28,20 @@ public class S3Spout extends BaseSpout {
     private AmazonS3 s3Client;
     private InputStream objectData;
     private BufferedReader reader;
-    private final String bucketName = "smart-grid-data";
-    private final String key = "1000recs.csv";
+    private String bucketName = "smart-grid-data";
+    private String key = "1000recs.csv";
     private S3Object object;
 
     @Override
     public void open(Map map, TopologyContext topologyContext, SpoutOutputCollector spoutOutputCollector) {
         super.open(map, topologyContext, spoutOutputCollector);
         try {
+            if (map.containsKey(Constants.S3_BUCKET_NAME)) {
+                bucketName = (String) map.get(Constants.S3_BUCKET_NAME);
+            }
+            if (map.containsKey(Constants.S3_KEY)) {
+                key = (String) map.get(Constants.S3_KEY);
+            }
             credentials = new ProfileCredentialsProvider().getCredentials();
             s3Client = new AmazonS3Client(credentials);
             object = s3Client.getObject(

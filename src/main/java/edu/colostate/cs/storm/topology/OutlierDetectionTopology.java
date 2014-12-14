@@ -2,11 +2,14 @@ package edu.colostate.cs.storm.topology;
 
 import backtype.storm.Config;
 import backtype.storm.LocalCluster;
+import backtype.storm.StormSubmitter;
+import backtype.storm.generated.AlreadyAliveException;
+import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.topology.TopologyBuilder;
 import backtype.storm.tuple.Fields;
 import edu.colostate.cs.storm.Constants;
 import edu.colostate.cs.storm.bolt.*;
-import edu.colostate.cs.storm.spout.BaseSpout;
+import edu.colostate.cs.storm.spout.S3Spout;
 
 /**
  * Author: Thilina
@@ -16,7 +19,7 @@ public class OutlierDetectionTopology {
     public static void main(String[] args) {
         TopologyBuilder builder = new TopologyBuilder();
 
-        builder.setSpout("spout", new BaseSpout(), 1);
+        builder.setSpout("spout", new S3Spout(), 1);
 
         builder.setBolt("sliding-window-bolt", new SlidingWindowBolt(), 1).globalGrouping("spout",
                 Constants.Streams.POWER_GRID_DATA).globalGrouping("spout", Constants.Streams.PERF_PUNCTUATION_STREAM);
@@ -38,9 +41,17 @@ public class OutlierDetectionTopology {
         Config conf = new Config();
         //conf.setDebug(true);
 
-        /*if (args != null && args.length > 1) {
-            conf.setNumWorkers(3);
-            conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
+        // when running in remote mode, use the following argument.
+        // topology_name s3_bucket s3_input s3_ouptut
+        if (args != null && args.length > 1) {
+            conf.setNumWorkers(4);
+            //conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
+            conf.put(Constants.S3_BUCKET_NAME, args[1]);
+            conf.put(Constants.S3_KEY, args[2]);
+            conf.put(Constants.S3_OUTPUT_KEY, args[3]);
+            if (args.length > 5) {
+                conf.put(Constants.MODE, args[5]);
+            }
             try {
                 StormSubmitter.submitTopology(args[0], conf, builder.createTopology());
             } catch (AlreadyAliveException e) {
@@ -48,17 +59,18 @@ public class OutlierDetectionTopology {
             } catch (InvalidTopologyException e) {
                 e.printStackTrace();
             }
-        } else { */
-        conf.setMaxTaskParallelism(5);
-        LocalCluster cluster = new LocalCluster();
-        //conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
-        cluster.submitTopology("check-sliding-window", conf, builder.createTopology());
-        try {
-            Thread.sleep(600 * 1000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+        } else {
+            conf.setMaxTaskParallelism(5);
+            LocalCluster cluster = new LocalCluster();
+            //conf.put(Constants.SLICE_LENGTH, Long.parseLong(args[1]));
+            cluster.submitTopology("check-sliding-window", conf, builder.createTopology());
+            try {
+                Thread.sleep(600 * 1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            cluster.shutdown();
+            //}
         }
-        cluster.shutdown();
-        //}
     }
 }
